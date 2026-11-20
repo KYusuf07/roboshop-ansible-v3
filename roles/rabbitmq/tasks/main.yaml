@@ -1,0 +1,52 @@
+    - name: copy rabbitmq repo
+      ansible.builtin.copy:
+        src: rabbitmq.repo
+        dest: /etc/yum.repos.d/rabbitmq.repo
+
+    - name: install rabbitmq server
+      ansible.builtin.dnf:
+        name: 
+          - erlang
+          - rabbitmq-server
+        state: present
+
+    - name: start and enable rabbitmq server
+      ansible.builtin.service:
+        name: rabbitmq-server
+        state: started
+        enabled: yes
+
+    - name: create rabbitmq user and set administrator tag
+      community.rabbitmq.rabbitmq_user:
+        user: "{{ rabbitmq_user }}"
+        password: "{{ rabbitmq_password }}"
+        vhost: /
+        configure_priv: .*
+        read_priv: .*
+        write_priv: .*
+        tags: administrator # This handles the 'set_user_tags' requirement idempotently
+        state: present
+
+    - name: enable RabbitMQ Management UI plugin
+      ansible.builtin.command: rabbitmq-plugins enable rabbitmq_management
+      register: plugin_enable
+      changed_when: "'The following plugins have been configured' in plugin_enable.stdout"
+
+    - name: check for robot-shop exchanges
+      ansible.builtin.shell: rabbitmqctl list_exchanges | grep robot-shop
+      register: rmq_exchanges
+      changed_when: false
+      failed_when: rmq_exchanges.rc >= 2
+
+    - name: list RabbitMQ queues, messages, and consumers
+      ansible.builtin.command: rabbitmqctl list_queues name messages consumers
+      register: rmq_queues
+      changed_when: false
+
+    - name: print execution results
+      ansible.builtin.debug:
+        msg: 
+          - "=== Robot-Shop Exchanges ==="
+          - "{{ rmq_exchanges.stdout_lines | default(['No robot-shop exchanges found']) }}"
+          - "=== Queues ==="
+          - "{{ rmq_queues.stdout_lines }}"

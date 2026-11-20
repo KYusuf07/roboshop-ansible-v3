@@ -1,0 +1,71 @@
+    - name: install golang
+      ansible.builtin.package:
+        name: golang
+        state: present
+
+    - name: create roboshop user
+      ansible.builtin.user:
+        name: roboshop
+        system: yes
+        home: /app
+        shell: /sbin/nologin
+        comment: "roboshop system user"
+        create_home: yes
+
+    - name: ensure /app directory has correct permissions
+      ansible.builtin.file:
+        path: /app
+        state: directory
+        owner: roboshop
+        group: roboshop
+
+    - name: download and extract dispatch application
+      ansible.builtin.unarchive:
+        src: https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/dispatch-v4.zip
+        dest: /app
+        remote_src: yes
+        owner: roboshop
+        group: roboshop
+
+    - name: build dispatch application
+      ansible.builtin.command: go build -o dispatch .
+      args:
+        chdir: /app
+
+    # - name: create dispatch systemd service file
+    #   ansible.builtin.copy:
+    #     dest: /etc/systemd/system/dispatch.service
+    #     content: |
+    #       [Unit]
+    #       Description=Dispatch Service
+    #       After=network-online.target
+
+    #       [Service]
+    #       User=roboshop
+    #       Environment=AMQP_HOST={{ rabbitmq_host }}
+    #       Environment=AMQP_USER=roboshop
+    #       Environment=AMQP_PASS={{ rabbitmq_pass }}
+    #       ExecStart=/app/dispatch
+    #       SyslogIdentifier=dispatch
+    #       Restart=on-failure
+    #       RestartSec=5
+
+    #       [Install]
+    #       WantedBy=multi-user.target
+
+    - name: systemd setup
+      include_role:
+        name: common
+        tasks_from: systemd-setup
+        
+    - name: restart application
+      include_role:
+        name: common
+        tasks_from: restart    
+
+    - name: start and enable dispatch service
+      ansible.builtin.systemd:
+        name: dispatch
+        state: started
+        enabled: yes
+        daemon_reload: yes
