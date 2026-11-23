@@ -14,14 +14,14 @@
 
 
 
-mongodb_host: mongodb.vibelearning.online
-redis_host: redis.vibelearning.online
-mysql_host: mysql.vibelearning.online
-rabbitmq_host: rabbitmq.vibelearning.online
-catalogue_host: catalogue.vibelearning.online
-user_host: user.vibelearning.online
-cart_host: cart.vibelearning.online
-dispatch_host: dispatch.vibelearning.online
-shipping_host: shipping.vibelearning.online
-payment_host: payment.vibelearning.online
+mongodb_host: mongodb-{{ env }}.vibelearning.online
+redis_host: redis-{{ env }}.vibelearning.online
+mysql_host: mysql-{{ env }}.vibelearning.online
+rabbitmq_host: rabbitmq-{{ env }}.vibelearning.online
+catalogue_host: catalog-{{ env }}ue.vibelearning.online
+user_host: user-{{ env }}.vibelearning.online
+cart_host: cart-{{ env }}.vibelearning.online
+dispatch_host: dispatch-{{ env }}.vibelearning.online
+shipping_host: shipping-{{ env }}.vibelearning.online
+payment_host: payment-{{ env }}.vibelearning.online
 
